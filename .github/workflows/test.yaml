@@ -116,6 +116,9 @@ jobs:
         run: |
           node app --setup="${SETUP}" --ci="${CI}"
 
+      - name: Run Flow
+        run: npm run flow
+
       - name: Setup on PostgreSQL
         if: startsWith(matrix.database, 'postgres')
         env:
