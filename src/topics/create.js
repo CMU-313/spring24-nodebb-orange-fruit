@@ -1,6 +1,7 @@
 
 'use strict';
 
+const Iroh = require('iroh');
 const _ = require('lodash');
 const assert = require('assert');
 const db = require('../database');
@@ -77,6 +78,7 @@ module.exports = function (Topics) {
         return topicData.tid;
     };
 
+
     /*  @param data : {
             uid : string | number
             title: string,
@@ -110,6 +112,31 @@ module.exports = function (Topics) {
         }
     */
     Topics.post = async function (data) {
+        const stage = new Iroh.Stage('Topics.create(data)');
+
+        const listener = stage.addListener(Iroh.CALL);
+        listener.on('before', () => {
+            console.log('Calling topics.create');
+        });
+        listener.on('after', () => {
+            console.log('Called topics.create');
+        });
+
+        const stage2 = new Iroh.Stage('if (data.content) {data.content = utils.rtrim(data.content);}');
+        const loopListener = stage2.addListener(Iroh.IF);
+        loopListener.on('enter', () => {
+            console.log('Entering if');
+        });
+        loopListener.on('leave', () => {
+            console.log('Leaving if');
+        });
+
+        // Next 2 lines must run, despite the linter saying it is unsafe.
+        // eslint-disable-next-line
+        eval(stage.script);
+        // eslint-disable-next-line
+        eval(stage2.script);
+
         /*
          * Ensure input types are correct. Some inputs change types across calls.
          * Certain errors are expected when required data is not given, hence
