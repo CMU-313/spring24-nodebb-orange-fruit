@@ -32,9 +32,17 @@ describe('Flags', () => {
     let category;
     before(async () => {
         // Create some stuff to flag
-        uid1 = await User.create({ username: 'testUser', password: 'abcdef', email: 'b@c.com' });
+        uid1 = await User.create({
+            username: 'testUser',
+            password: 'abcdef',
+            email: 'b@c.com',
+        });
 
-        adminUid = await User.create({ username: 'testUser2', password: 'abcdef', email: 'c@d.com' });
+        adminUid = await User.create({
+            username: 'testUser2',
+            password: 'abcdef',
+            email: 'c@d.com',
+        });
         await Groups.join('administrators', adminUid);
 
         category = await Categories.create({
@@ -48,13 +56,18 @@ describe('Flags', () => {
         });
 
         uid3 = await User.create({
-            username: 'unprivileged', password: 'abcdef', email: 'd@e.com',
+            username: 'unprivileged',
+            password: 'abcdef',
+            email: 'd@e.com',
         });
 
         moderatorUid = await User.create({
-            username: 'moderator', password: 'abcdef',
+            username: 'moderator',
+            password: 'abcdef',
         });
-        await Privileges.categories.give(['moderate'], category.cid, [moderatorUid]);
+        await Privileges.categories.give(['moderate'], category.cid, [
+            moderatorUid,
+        ]);
 
         const login = await helpers.loginUser('moderator', 'abcdef');
         jar = login.jar;
@@ -136,7 +149,7 @@ describe('Flags', () => {
     });
 
     describe('.get()', () => {
-        it('should retrieve and display a flag\'s data', (done) => {
+        it("should retrieve and display a flag's data", (done) => {
             Flags.get(1, (err, flagData) => {
                 assert.ifError(err);
                 const compare = {
@@ -207,146 +220,176 @@ describe('Flags', () => {
 
     describe('.list()', () => {
         it('should show a list of flags (with one item)', (done) => {
-            Flags.list({
-                filters: {},
-                uid: 1,
-            }, (err, payload) => {
-                assert.ifError(err);
-                assert.ok(payload.hasOwnProperty('flags'));
-                assert.ok(payload.hasOwnProperty('page'));
-                assert.ok(payload.hasOwnProperty('pageCount'));
-                assert.ok(Array.isArray(payload.flags));
-                assert.equal(payload.flags.length, 1);
-
-                Flags.get(payload.flags[0].flagId, (err, flagData) => {
+            Flags.list(
+                {
+                    filters: {},
+                    uid: 1,
+                },
+                (err, payload) => {
                     assert.ifError(err);
-                    assert.equal(payload.flags[0].flagId, flagData.flagId);
-                    assert.equal(payload.flags[0].description, flagData.description);
-                    done();
-                });
-            });
+                    assert.ok(payload.hasOwnProperty('flags'));
+                    assert.ok(payload.hasOwnProperty('page'));
+                    assert.ok(payload.hasOwnProperty('pageCount'));
+                    assert.ok(Array.isArray(payload.flags));
+                    assert.equal(payload.flags.length, 1);
+
+                    Flags.get(payload.flags[0].flagId, (err, flagData) => {
+                        assert.ifError(err);
+                        assert.equal(payload.flags[0].flagId, flagData.flagId);
+                        assert.equal(
+                            payload.flags[0].description,
+                            flagData.description,
+                        );
+                        done();
+                    });
+                },
+            );
         });
 
         describe('(with filters)', () => {
             it('should return a filtered list of flags if said filters are passed in', (done) => {
-                Flags.list({
-                    filters: {
-                        state: 'open',
+                Flags.list(
+                    {
+                        filters: {
+                            state: 'open',
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(1, parseInt(payload.flags[0].flagId, 10));
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(
+                            1,
+                            parseInt(payload.flags[0].flagId, 10),
+                        );
+                        done();
+                    },
+                );
             });
 
             it('should return no flags if a filter with no matching flags is used', (done) => {
-                Flags.list({
-                    filters: {
-                        state: 'rejected',
+                Flags.list(
+                    {
+                        filters: {
+                            state: 'rejected',
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(0, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(0, payload.flags.length);
+                        done();
+                    },
+                );
             });
 
             it('should return a flag when filtered by cid 1', (done) => {
-                Flags.list({
-                    filters: {
-                        cid: 1,
+                Flags.list(
+                    {
+                        filters: {
+                            cid: 1,
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(1, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(1, payload.flags.length);
+                        done();
+                    },
+                );
             });
 
-            it('shouldn\'t return a flag when filtered by cid 2', (done) => {
-                Flags.list({
-                    filters: {
-                        cid: 2,
+            it("shouldn't return a flag when filtered by cid 2", (done) => {
+                Flags.list(
+                    {
+                        filters: {
+                            cid: 2,
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(0, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(0, payload.flags.length);
+                        done();
+                    },
+                );
             });
 
             it('should return a flag when filtered by both cid 1 and 2', (done) => {
-                Flags.list({
-                    filters: {
-                        cid: [1, 2],
+                Flags.list(
+                    {
+                        filters: {
+                            cid: [1, 2],
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(1, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(1, payload.flags.length);
+                        done();
+                    },
+                );
             });
 
             it('should return one flag if filtered by both cid 1 and 2 and open state', (done) => {
-                Flags.list({
-                    filters: {
-                        cid: [1, 2],
-                        state: 'open',
+                Flags.list(
+                    {
+                        filters: {
+                            cid: [1, 2],
+                            state: 'open',
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(1, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(1, payload.flags.length);
+                        done();
+                    },
+                );
             });
 
             it('should return no flag if filtered by both cid 1 and 2 and non-open state', (done) => {
-                Flags.list({
-                    filters: {
-                        cid: [1, 2],
-                        state: 'resolved',
+                Flags.list(
+                    {
+                        filters: {
+                            cid: [1, 2],
+                            state: 'resolved',
+                        },
+                        uid: 1,
                     },
-                    uid: 1,
-                }, (err, payload) => {
-                    assert.ifError(err);
-                    assert.ok(payload.hasOwnProperty('flags'));
-                    assert.ok(payload.hasOwnProperty('page'));
-                    assert.ok(payload.hasOwnProperty('pageCount'));
-                    assert.ok(Array.isArray(payload.flags));
-                    assert.strictEqual(0, payload.flags.length);
-                    done();
-                });
+                    (err, payload) => {
+                        assert.ifError(err);
+                        assert.ok(payload.hasOwnProperty('flags'));
+                        assert.ok(payload.hasOwnProperty('page'));
+                        assert.ok(payload.hasOwnProperty('pageCount'));
+                        assert.ok(Array.isArray(payload.flags));
+                        assert.strictEqual(0, payload.flags.length);
+                        done();
+                    },
+                );
             });
         });
 
@@ -367,14 +410,19 @@ describe('Flags', () => {
                     uid: adminUid,
                 });
 
-                assert(payload.flags.every((cur, idx) => {
-                    if (idx === payload.flags.length - 1) {
-                        return true;
-                    }
+                assert(
+                    payload.flags.every((cur, idx) => {
+                        if (idx === payload.flags.length - 1) {
+                            return true;
+                        }
 
-                    const next = payload.flags[idx + 1];
-                    return parseInt(cur.datetime, 10) > parseInt(next.datetime, 10);
-                }));
+                        const next = payload.flags[idx + 1];
+                        return (
+                            parseInt(cur.datetime, 10) >
+                            parseInt(next.datetime, 10)
+                        );
+                    }),
+                );
             });
 
             it('should return sorted flags oldest first if "oldest" sort is passed in', async () => {
@@ -383,14 +431,19 @@ describe('Flags', () => {
                     sort: 'oldest',
                 });
 
-                assert(payload.flags.every((cur, idx) => {
-                    if (idx === payload.flags.length - 1) {
-                        return true;
-                    }
+                assert(
+                    payload.flags.every((cur, idx) => {
+                        if (idx === payload.flags.length - 1) {
+                            return true;
+                        }
 
-                    const next = payload.flags[idx + 1];
-                    return parseInt(cur.datetime, 10) < parseInt(next.datetime, 10);
-                }));
+                        const next = payload.flags[idx + 1];
+                        return (
+                            parseInt(cur.datetime, 10) <
+                            parseInt(next.datetime, 10)
+                        );
+                    }),
+                );
             });
 
             it('should return flags with more reports first if "reports" sort is passed in', async () => {
@@ -399,39 +452,55 @@ describe('Flags', () => {
                     sort: 'reports',
                 });
 
-                assert(payload.flags.every((cur, idx) => {
-                    if (idx === payload.flags.length - 1) {
-                        return true;
-                    }
+                assert(
+                    payload.flags.every((cur, idx) => {
+                        if (idx === payload.flags.length - 1) {
+                            return true;
+                        }
 
-                    const next = payload.flags[idx + 1];
-                    return parseInt(cur.heat, 10) >= parseInt(next.heat, 10);
-                }));
+                        const next = payload.flags[idx + 1];
+                        return (
+                            parseInt(cur.heat, 10) >= parseInt(next.heat, 10)
+                        );
+                    }),
+                );
             });
         });
     });
 
     describe('.update()', () => {
-        it('should alter a flag\'s various attributes and persist them to the database', (done) => {
-            Flags.update(1, adminUid, {
-                state: 'wip',
-                assignee: adminUid,
-            }, (err) => {
-                assert.ifError(err);
-                db.getObjectFields('flag:1', ['state', 'assignee'], (err, data) => {
-                    if (err) {
-                        throw err;
-                    }
+        it("should alter a flag's various attributes and persist them to the database", (done) => {
+            Flags.update(
+                1,
+                adminUid,
+                {
+                    state: 'wip',
+                    assignee: adminUid,
+                },
+                (err) => {
+                    assert.ifError(err);
+                    db.getObjectFields(
+                        'flag:1',
+                        ['state', 'assignee'],
+                        (err, data) => {
+                            if (err) {
+                                throw err;
+                            }
 
-                    assert.strictEqual('wip', data.state);
-                    assert.ok(!isNaN(parseInt(data.assignee, 10)));
-                    assert.strictEqual(adminUid, parseInt(data.assignee, 10));
-                    done();
-                });
-            });
+                            assert.strictEqual('wip', data.state);
+                            assert.ok(!isNaN(parseInt(data.assignee, 10)));
+                            assert.strictEqual(
+                                adminUid,
+                                parseInt(data.assignee, 10),
+                            );
+                            done();
+                        },
+                    );
+                },
+            );
         });
 
-        it('should persist to the flag\'s history', (done) => {
+        it("should persist to the flag's history", (done) => {
             Flags.getHistory(1, (err, history) => {
                 if (err) {
                     throw err;
@@ -439,13 +508,16 @@ describe('Flags', () => {
 
                 history.forEach((change) => {
                     switch (change.attribute) {
-                    case 'state':
-                        assert.strictEqual('[[flags:state-wip]]', change.value);
-                        break;
+                        case 'state':
+                            assert.strictEqual(
+                                '[[flags:state-wip]]',
+                                change.value,
+                            );
+                            break;
 
-                    case 'assignee':
-                        assert.strictEqual(1, change.value);
-                        break;
+                        case 'assignee':
+                            assert.strictEqual(1, change.value);
+                            break;
                     }
                 });
 
@@ -522,7 +594,10 @@ describe('Flags', () => {
                     title: 'Topic to flag',
                     content: 'This is flaggable content',
                 });
-                flagObj = await api.flags.create({ uid: uid1 }, { type: 'post', id: result.postData.pid, reason: 'spam' });
+                flagObj = await api.flags.create(
+                    { uid: uid1 },
+                    { type: 'post', id: result.postData.pid, reason: 'spam' },
+                );
                 await sleep(2000);
             });
 
@@ -535,7 +610,9 @@ describe('Flags', () => {
                 });
 
                 userNotifs = await User.notifications.getAll(adminUid);
-                assert(!userNotifs.includes(`flag:post:${result.postData.pid}`));
+                assert(
+                    !userNotifs.includes(`flag:post:${result.postData.pid}`),
+                );
             });
 
             it('should rescind notification if flag is rejected', async () => {
@@ -547,7 +624,9 @@ describe('Flags', () => {
                 });
 
                 userNotifs = await User.notifications.getAll(adminUid);
-                assert(!userNotifs.includes(`flag:post:${result.postData.pid}`));
+                assert(
+                    !userNotifs.includes(`flag:post:${result.postData.pid}`),
+                );
             });
 
             it('should do nothing if flag is resolved but ACP action is not "rescind"', async () => {
@@ -637,15 +716,21 @@ describe('Flags', () => {
                     throw err;
                 }
 
-                Flags.validate({
-                    type: 'post',
-                    id: 1,
-                    uid: 1,
-                }, (err) => {
-                    assert.ok(err);
-                    assert.strictEqual('[[error:post-deleted]]', err.message);
-                    Posts.restore(1, 1, done);
-                });
+                Flags.validate(
+                    {
+                        type: 'post',
+                        id: 1,
+                        uid: 1,
+                    },
+                    (err) => {
+                        assert.ok(err);
+                        assert.strictEqual(
+                            '[[error:post-deleted]]',
+                            err.message,
+                        );
+                        Posts.restore(1, 1, done);
+                    },
+                );
             });
         });
 
@@ -653,15 +738,21 @@ describe('Flags', () => {
             Meta.configs.set('min:rep:flag', '50', (err) => {
                 assert.ifError(err);
 
-                Flags.validate({
-                    type: 'post',
-                    id: 1,
-                    uid: 3,
-                }, (err) => {
-                    assert.ok(err);
-                    assert.strictEqual('[[error:not-enough-reputation-to-flag, 50]]', err.message);
-                    Meta.configs.set('min:rep:flag', 0, done);
-                });
+                Flags.validate(
+                    {
+                        type: 'post',
+                        id: 1,
+                        uid: 3,
+                    },
+                    (err) => {
+                        assert.ok(err);
+                        assert.strictEqual(
+                            '[[error:not-enough-reputation-to-flag, 50]]',
+                            err.message,
+                        );
+                        Meta.configs.set('min:rep:flag', 0, done);
+                    },
+                );
             });
         });
 
@@ -676,11 +767,14 @@ describe('Flags', () => {
                 title: 'Another topic',
                 content: 'This is flaggable content',
             });
-            await apiFlags.create({ uid: reporterUid }, {
-                type: 'post',
-                id: data.postData.pid,
-                reason: 'spam',
-            });
+            await apiFlags.create(
+                { uid: reporterUid },
+                {
+                    type: 'post',
+                    id: data.postData.pid,
+                    reason: 'spam',
+                },
+            );
         });
 
         it('should send back error if reporter does not exist', (done) => {
@@ -724,8 +818,15 @@ describe('Flags', () => {
         });
 
         it('should insert a note in the past if a datetime is passed in', async () => {
-            await Flags.appendNote(1, 1, 'this is the first note', 1626446956652);
-            const note = (await db.getSortedSetRange('flag:1:notes', 0, 0)).pop();
+            await Flags.appendNote(
+                1,
+                1,
+                'this is the first note',
+                1626446956652,
+            );
+            const note = (
+                await db.getSortedSetRange('flag:1:notes', 0, 0)
+            ).pop();
             assert.strictEqual('[1,"this is the first note"]', note);
         });
     });
@@ -757,7 +858,10 @@ describe('Flags', () => {
         it('should retrieve a list of notes, from newest to oldest', (done) => {
             Flags.getNotes(1, (err, notes) => {
                 assert.ifError(err);
-                assert(notes[0].datetime > notes[1].datetime, `${notes[0].datetime}-${notes[1].datetime}`);
+                assert(
+                    notes[0].datetime > notes[1].datetime,
+                    `${notes[0].datetime}-${notes[1].datetime}`,
+                );
                 assert.strictEqual('this is the second note', notes[0].content);
                 done();
             });
@@ -773,30 +877,38 @@ describe('Flags', () => {
             });
         });
 
-        it('should add a new entry into a flag\'s history', (done) => {
-            Flags.appendHistory(1, 1, {
-                state: 'rejected',
-            }, (err) => {
-                assert.ifError(err);
+        it("should add a new entry into a flag's history", (done) => {
+            Flags.appendHistory(
+                1,
+                1,
+                {
+                    state: 'rejected',
+                },
+                (err) => {
+                    assert.ifError(err);
 
-                Flags.getHistory(1, (err, history) => {
-                    if (err) {
-                        throw err;
-                    }
+                    Flags.getHistory(1, (err, history) => {
+                        if (err) {
+                            throw err;
+                        }
 
-                    // 1 for the new event appended, 2 for username/email change
-                    assert.strictEqual(entries + 3, history.length);
-                    done();
-                });
-            });
+                        // 1 for the new event appended, 2 for username/email change
+                        assert.strictEqual(entries + 3, history.length);
+                        done();
+                    });
+                },
+            );
         });
     });
 
     describe('.getHistory()', () => {
-        it('should retrieve a flag\'s history', (done) => {
+        it("should retrieve a flag's history", (done) => {
             Flags.getHistory(1, (err, history) => {
                 assert.ifError(err);
-                assert.strictEqual(history[0].fields.state, '[[flags:state-rejected]]');
+                assert.strictEqual(
+                    history[0].fields.state,
+                    '[[flags:state-rejected]]',
+                );
                 done();
             });
         });
@@ -860,19 +972,28 @@ describe('Flags', () => {
                     body: {
                         type: 'post',
                         id: postData.pid,
-                        reason: '"<script>alert(\'ok\');</script>',
+                        reason: "\"<script>alert('ok');</script>",
                     },
                     json: true,
                 });
 
                 const flagData = await Flags.get(response.flagId);
-                assert.strictEqual(flagData.reports[0].value, '&quot;&lt;script&gt;alert(&#x27;ok&#x27;);&lt;&#x2F;script&gt;');
+                assert.strictEqual(
+                    flagData.reports[0].value,
+                    '&quot;&lt;script&gt;alert(&#x27;ok&#x27;);&lt;&#x2F;script&gt;',
+                );
             });
 
             it('should not allow flagging post in private category', async () => {
-                const category = await Categories.create({ name: 'private category' });
+                const category = await Categories.create({
+                    name: 'private category',
+                });
 
-                await Privileges.categories.rescind(['groups:topics:read'], category.cid, 'registered-users');
+                await Privileges.categories.rescind(
+                    ['groups:topics:read'],
+                    category.cid,
+                    'registered-users',
+                );
                 await Groups.join('private category', uid3);
                 const result = await Topics.post({
                     cid: category.cid,
@@ -912,7 +1033,8 @@ describe('Flags', () => {
                 assert.deepStrictEqual(body, {
                     status: {
                         code: 'forbidden',
-                        message: 'You do not have enough privileges for this action.',
+                        message:
+                            'You do not have enough privileges for this action.',
                     },
                     response: {},
                 });
@@ -920,7 +1042,7 @@ describe('Flags', () => {
         });
 
         describe('.update()', () => {
-            it('should update a flag\'s properties', async () => {
+            it("should update a flag's properties", async () => {
                 const { response } = await request({
                     method: 'put',
                     uri: `${nconf.get('url')}/api/v3/flags/2`,
@@ -937,7 +1059,10 @@ describe('Flags', () => {
                 const { history } = response;
                 assert(Array.isArray(history));
                 assert(history[0].fields.hasOwnProperty('state'));
-                assert.strictEqual('[[flags:state-wip]]', history[0].fields.state);
+                assert.strictEqual(
+                    '[[flags:state-wip]]',
+                    history[0].fields.state,
+                );
             });
         });
 
@@ -959,13 +1084,25 @@ describe('Flags', () => {
 
                 assert(response.hasOwnProperty('notes'));
                 assert(Array.isArray(response.notes));
-                assert.strictEqual('lorem ipsum dolor sit amet', response.notes[0].content);
+                assert.strictEqual(
+                    'lorem ipsum dolor sit amet',
+                    response.notes[0].content,
+                );
                 assert.strictEqual(2, response.notes[0].uid);
 
                 assert(response.hasOwnProperty('history'));
                 assert(Array.isArray(response.history));
-                assert.strictEqual(1, Object.keys(response.history[response.history.length - 1].fields).length);
-                assert(response.history[response.history.length - 1].fields.hasOwnProperty('notes'));
+                assert.strictEqual(
+                    1,
+                    Object.keys(
+                        response.history[response.history.length - 1].fields,
+                    ).length,
+                );
+                assert(
+                    response.history[
+                        response.history.length - 1
+                    ].fields.hasOwnProperty('notes'),
+                );
             });
         });
 
@@ -999,10 +1136,19 @@ describe('Flags', () => {
             const noteTime = Date.now();
 
             before(async () => {
-                uid = await User.create({ username: 'flags-access-control', password: 'abcdef' });
-                ({ jar, csrf_token } = await helpers.loginUser('flags-access-control', 'abcdef'));
+                uid = await User.create({
+                    username: 'flags-access-control',
+                    password: 'abcdef',
+                });
+                ({ jar, csrf_token } = await helpers.loginUser(
+                    'flags-access-control',
+                    'abcdef',
+                ));
 
-                flaggerUid = await User.create({ username: 'flags-access-control-flagger', password: 'abcdef' });
+                flaggerUid = await User.create({
+                    username: 'flags-access-control-flagger',
+                    password: 'abcdef',
+                });
             });
 
             beforeEach(async () => {
@@ -1018,7 +1164,12 @@ describe('Flags', () => {
                     content: utils.generateUUID(),
                 });
 
-                ({ flagId } = await Flags.create('post', postData.pid, flaggerUid, 'spam'));
+                ({ flagId } = await Flags.create(
+                    'post',
+                    postData.pid,
+                    flaggerUid,
+                    'spam',
+                ));
                 requests = new Set([
                     {
                         method: 'get',
@@ -1093,7 +1244,10 @@ describe('Flags', () => {
 
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert(statusCode.toString().startsWith(4), `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert(
+                        statusCode.toString().startsWith(4),
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
 
@@ -1101,7 +1255,10 @@ describe('Flags', () => {
                 for (const opts of requests) {
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert(statusCode.toString().startsWith(4), `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert(
+                        statusCode.toString().startsWith(4),
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
 
@@ -1111,7 +1268,11 @@ describe('Flags', () => {
                 for (const opts of requests) {
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert.strictEqual(
+                        statusCode,
+                        200,
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
 
@@ -1121,7 +1282,11 @@ describe('Flags', () => {
                 for (const opts of requests) {
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert.strictEqual(
+                        statusCode,
+                        200,
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
 
@@ -1131,7 +1296,11 @@ describe('Flags', () => {
                 for (const opts of requests) {
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert.strictEqual(statusCode, 200, `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert.strictEqual(
+                        statusCode,
+                        200,
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
 
@@ -1145,7 +1314,10 @@ describe('Flags', () => {
                 for (const opts of requests) {
                     // eslint-disable-next-line no-await-in-loop
                     const { statusCode } = await request(opts);
-                    assert(statusCode.toString().startsWith(4), `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`);
+                    assert(
+                        statusCode.toString().startsWith(4),
+                        `${opts.method.toUpperCase()} ${opts.uri} => ${statusCode}`,
+                    );
                 }
             });
         });

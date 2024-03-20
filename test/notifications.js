@@ -1,6 +1,5 @@
 'use strict';
 
-
 const assert = require('assert');
 const async = require('async');
 const nconf = require('nconf');
@@ -37,39 +36,52 @@ describe('Notifications', () => {
     });
 
     it('should create a notification', (done) => {
-        notifications.create({
-            bodyShort: 'bodyShort',
-            nid: 'notification_id',
-            path: '/notification/path',
-            pid: 1,
-        }, (err, _notification) => {
-            notification = _notification;
-            assert.ifError(err);
-            assert(notification);
-            db.exists(`notifications:${notification.nid}`, (err, exists) => {
+        notifications.create(
+            {
+                bodyShort: 'bodyShort',
+                nid: 'notification_id',
+                path: '/notification/path',
+                pid: 1,
+            },
+            (err, _notification) => {
+                notification = _notification;
                 assert.ifError(err);
-                assert(exists);
-                db.isSortedSetMember('notifications', notification.nid, (err, isMember) => {
-                    assert.ifError(err);
-                    assert(isMember);
-                    done();
-                });
-            });
-        });
+                assert(notification);
+                db.exists(
+                    `notifications:${notification.nid}`,
+                    (err, exists) => {
+                        assert.ifError(err);
+                        assert(exists);
+                        db.isSortedSetMember(
+                            'notifications',
+                            notification.nid,
+                            (err, isMember) => {
+                                assert.ifError(err);
+                                assert(isMember);
+                                done();
+                            },
+                        );
+                    },
+                );
+            },
+        );
     });
 
     it('should return null if pid is same and importance is lower', (done) => {
-        notifications.create({
-            bodyShort: 'bodyShort',
-            nid: 'notification_id',
-            path: '/notification/path',
-            pid: 1,
-            importance: 1,
-        }, (err, notification) => {
-            assert.ifError(err);
-            assert.strictEqual(notification, null);
-            done();
-        });
+        notifications.create(
+            {
+                bodyShort: 'bodyShort',
+                nid: 'notification_id',
+                path: '/notification/path',
+                pid: 1,
+                importance: 1,
+            },
+            (err, notification) => {
+                assert.ifError(err);
+                assert.strictEqual(notification, null);
+                done();
+            },
+        );
     });
 
     it('should get empty array', (done) => {
@@ -82,13 +94,16 @@ describe('Notifications', () => {
     });
 
     it('should get notifications', (done) => {
-        notifications.getMultiple([notification.nid], (err, notificationsData) => {
-            assert.ifError(err);
-            assert(Array.isArray(notificationsData));
-            assert(notificationsData[0]);
-            assert.equal(notification.nid, notificationsData[0].nid);
-            done();
-        });
+        notifications.getMultiple(
+            [notification.nid],
+            (err, notificationsData) => {
+                assert.ifError(err);
+                assert(Array.isArray(notificationsData));
+                assert(notificationsData[0]);
+                assert.equal(notification.nid, notificationsData[0].nid);
+                done();
+            },
+        );
     });
 
     it('should do nothing', (done) => {
@@ -108,11 +123,15 @@ describe('Notifications', () => {
         notifications.push(notification, [uid], (err) => {
             assert.ifError(err);
             setTimeout(() => {
-                db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
-                    assert.ifError(err);
-                    assert(isMember);
-                    done();
-                });
+                db.isSortedSetMember(
+                    `uid:${uid}:notifications:unread`,
+                    notification.nid,
+                    (err, isMember) => {
+                        assert.ifError(err);
+                        assert(isMember);
+                        done();
+                    },
+                );
             }, 2000);
         });
     });
@@ -121,26 +140,38 @@ describe('Notifications', () => {
         notifications.pushGroup(notification, 'registered-users', (err) => {
             assert.ifError(err);
             setTimeout(() => {
-                db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
-                    assert.ifError(err);
-                    assert(isMember);
-                    done();
-                });
+                db.isSortedSetMember(
+                    `uid:${uid}:notifications:unread`,
+                    notification.nid,
+                    (err, isMember) => {
+                        assert.ifError(err);
+                        assert(isMember);
+                        done();
+                    },
+                );
             }, 2000);
         });
     });
 
     it('should push a notification to groups', (done) => {
-        notifications.pushGroups(notification, ['registered-users', 'administrators'], (err) => {
-            assert.ifError(err);
-            setTimeout(() => {
-                db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
-                    assert.ifError(err);
-                    assert(isMember);
-                    done();
-                });
-            }, 2000);
-        });
+        notifications.pushGroups(
+            notification,
+            ['registered-users', 'administrators'],
+            (err) => {
+                assert.ifError(err);
+                setTimeout(() => {
+                    db.isSortedSetMember(
+                        `uid:${uid}:notifications:unread`,
+                        notification.nid,
+                        (err, isMember) => {
+                            assert.ifError(err);
+                            assert(isMember);
+                            done();
+                        },
+                    );
+                }, 2000);
+            },
+        );
     });
 
     it('should not mark anything with invalid uid or nid', (done) => {
@@ -156,15 +187,23 @@ describe('Notifications', () => {
     it('should mark a notification read', (done) => {
         socketNotifications.markRead({ uid: uid }, notification.nid, (err) => {
             assert.ifError(err);
-            db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
-                assert.ifError(err);
-                assert.equal(isMember, false);
-                db.isSortedSetMember(`uid:${uid}:notifications:read`, notification.nid, (err, isMember) => {
+            db.isSortedSetMember(
+                `uid:${uid}:notifications:unread`,
+                notification.nid,
+                (err, isMember) => {
                     assert.ifError(err);
-                    assert.equal(isMember, true);
-                    done();
-                });
-            });
+                    assert.equal(isMember, false);
+                    db.isSortedSetMember(
+                        `uid:${uid}:notifications:read`,
+                        notification.nid,
+                        (err, isMember) => {
+                            assert.ifError(err);
+                            assert.equal(isMember, true);
+                            done();
+                        },
+                    );
+                },
+            );
         });
     });
 
@@ -186,36 +225,60 @@ describe('Notifications', () => {
     });
 
     it('should mark a notification unread', (done) => {
-        socketNotifications.markUnread({ uid: uid }, notification.nid, (err) => {
-            assert.ifError(err);
-            db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
+        socketNotifications.markUnread(
+            { uid: uid },
+            notification.nid,
+            (err) => {
                 assert.ifError(err);
-                assert.equal(isMember, true);
-                db.isSortedSetMember(`uid:${uid}:notifications:read`, notification.nid, (err, isMember) => {
-                    assert.ifError(err);
-                    assert.equal(isMember, false);
-                    socketNotifications.getCount({ uid: uid }, null, (err, count) => {
+                db.isSortedSetMember(
+                    `uid:${uid}:notifications:unread`,
+                    notification.nid,
+                    (err, isMember) => {
                         assert.ifError(err);
-                        assert.equal(count, 1);
-                        done();
-                    });
-                });
-            });
-        });
+                        assert.equal(isMember, true);
+                        db.isSortedSetMember(
+                            `uid:${uid}:notifications:read`,
+                            notification.nid,
+                            (err, isMember) => {
+                                assert.ifError(err);
+                                assert.equal(isMember, false);
+                                socketNotifications.getCount(
+                                    { uid: uid },
+                                    null,
+                                    (err, count) => {
+                                        assert.ifError(err);
+                                        assert.equal(count, 1);
+                                        done();
+                                    },
+                                );
+                            },
+                        );
+                    },
+                );
+            },
+        );
     });
 
     it('should mark all notifications read', (done) => {
         socketNotifications.markAllRead({ uid: uid }, null, (err) => {
             assert.ifError(err);
-            db.isSortedSetMember(`uid:${uid}:notifications:unread`, notification.nid, (err, isMember) => {
-                assert.ifError(err);
-                assert.equal(isMember, false);
-                db.isSortedSetMember(`uid:${uid}:notifications:read`, notification.nid, (err, isMember) => {
+            db.isSortedSetMember(
+                `uid:${uid}:notifications:unread`,
+                notification.nid,
+                (err, isMember) => {
                     assert.ifError(err);
-                    assert.equal(isMember, true);
-                    done();
-                });
-            });
+                    assert.equal(isMember, false);
+                    db.isSortedSetMember(
+                        `uid:${uid}:notifications:read`,
+                        notification.nid,
+                        (err, isMember) => {
+                            assert.ifError(err);
+                            assert.equal(isMember, true);
+                            done();
+                        },
+                    );
+                },
+            );
         });
     });
 
@@ -234,78 +297,109 @@ describe('Notifications', () => {
         let tid;
         let pid;
 
-        async.waterfall([
-            function (next) {
-                user.create({ username: 'watcher' }, next);
-            },
-            function (_watcherUid, next) {
-                watcherUid = _watcherUid;
+        async.waterfall(
+            [
+                function (next) {
+                    user.create({ username: 'watcher' }, next);
+                },
+                function (_watcherUid, next) {
+                    watcherUid = _watcherUid;
 
-                categories.create({
-                    name: 'Test Category',
-                    description: 'Test category created by testing script',
-                }, next);
-            },
-            function (category, next) {
-                cid = category.cid;
+                    categories.create(
+                        {
+                            name: 'Test Category',
+                            description:
+                                'Test category created by testing script',
+                        },
+                        next,
+                    );
+                },
+                function (category, next) {
+                    cid = category.cid;
 
-                topics.post({
-                    uid: watcherUid,
-                    cid: cid,
-                    title: 'Test Topic Title',
-                    content: 'The content of test topic',
-                }, next);
-            },
-            function (topic, next) {
-                tid = topic.topicData.tid;
+                    topics.post(
+                        {
+                            uid: watcherUid,
+                            cid: cid,
+                            title: 'Test Topic Title',
+                            content: 'The content of test topic',
+                        },
+                        next,
+                    );
+                },
+                function (topic, next) {
+                    tid = topic.topicData.tid;
 
-                topics.follow(tid, watcherUid, next);
-            },
-            function (next) {
-                topics.reply({
-                    uid: uid,
-                    content: 'This is the first reply.',
-                    tid: tid,
-                }, next);
-            },
-            function (post, next) {
-                pid = post.pid;
+                    topics.follow(tid, watcherUid, next);
+                },
+                function (next) {
+                    topics.reply(
+                        {
+                            uid: uid,
+                            content: 'This is the first reply.',
+                            tid: tid,
+                        },
+                        next,
+                    );
+                },
+                function (post, next) {
+                    pid = post.pid;
 
-                topics.reply({
-                    uid: uid,
-                    content: 'This is the second reply.',
-                    tid: tid,
-                }, next);
+                    topics.reply(
+                        {
+                            uid: uid,
+                            content: 'This is the second reply.',
+                            tid: tid,
+                        },
+                        next,
+                    );
+                },
+                function (post, next) {
+                    // notifications are sent asynchronously with a 1 second delay.
+                    setTimeout(next, 3000);
+                },
+                function (next) {
+                    user.notifications.get(watcherUid, next);
+                },
+                function (notifications, next) {
+                    assert.equal(
+                        notifications.unread.length,
+                        1,
+                        'there should be 1 unread notification',
+                    );
+                    assert.equal(
+                        `${nconf.get('relative_path')}/post/${pid}`,
+                        notifications.unread[0].path,
+                        'the notification should link to the first unread post',
+                    );
+                    next();
+                },
+            ],
+            (err) => {
+                assert.ifError(err);
+                done();
             },
-            function (post, next) {
-                // notifications are sent asynchronously with a 1 second delay.
-                setTimeout(next, 3000);
-            },
-            function (next) {
-                user.notifications.get(watcherUid, next);
-            },
-            function (notifications, next) {
-                assert.equal(notifications.unread.length, 1, 'there should be 1 unread notification');
-                assert.equal(`${nconf.get('relative_path')}/post/${pid}`, notifications.unread[0].path, 'the notification should link to the first unread post');
-                next();
-            },
-        ], (err) => {
-            assert.ifError(err);
-            done();
-        });
+        );
     });
 
     it('should get notification by nid', (done) => {
-        socketNotifications.get({ uid: uid }, { nids: [notification.nid] }, (err, data) => {
-            assert.ifError(err);
-            assert.equal(data[0].bodyShort, 'bodyShort');
-            assert.equal(data[0].nid, 'notification_id');
-            assert.equal(data[0].path, `${nconf.get('relative_path')}/notification/path`);
-            done();
-        });
+        socketNotifications.get(
+            { uid: uid },
+            { nids: [notification.nid] },
+            (err, data) => {
+                assert.ifError(err);
+                assert.equal(data[0].bodyShort, 'bodyShort');
+                assert.equal(data[0].nid, 'notification_id');
+                assert.equal(
+                    data[0].path,
+                    `${nconf.get('relative_path')}/notification/path`,
+                );
+                done();
+            },
+        );
     });
 
-    it('should get user\'s notifications', (done) => {
+    it("should get user's notifications", (done) => {
         socketNotifications.get({ uid: uid }, {}, (err, data) => {
             assert.ifError(err);
             assert.equal(data.unread.length, 0);
@@ -344,32 +438,39 @@ describe('Notifications', () => {
 
     it('should get all notifications and filter', (done) => {
         const nid = 'willbefiltered';
-        notifications.create({
-            bodyShort: 'bodyShort',
-            nid: nid,
-            path: '/notification/path',
-            type: 'post',
-        }, (err, notification) => {
-            assert.ifError(err);
-            notifications.push(notification, [uid], (err) => {
+        notifications.create(
+            {
+                bodyShort: 'bodyShort',
+                nid: nid,
+                path: '/notification/path',
+                type: 'post',
+            },
+            (err, notification) => {
                 assert.ifError(err);
-                setTimeout(() => {
-                    user.notifications.getAll(uid, 'post', (err, nids) => {
-                        assert.ifError(err);
-                        assert(nids.includes(nid));
-                        done();
-                    });
-                }, 3000);
-            });
-        });
+                notifications.push(notification, [uid], (err) => {
+                    assert.ifError(err);
+                    setTimeout(() => {
+                        user.notifications.getAll(uid, 'post', (err, nids) => {
+                            assert.ifError(err);
+                            assert(nids.includes(nid));
+                            done();
+                        });
+                    }, 3000);
+                });
+            },
+        );
     });
 
     it('should not get anything if notifications does not exist', (done) => {
-        user.notifications.getNotifications(['doesnotexistnid1', 'doesnotexistnid2'], uid, (err, data) => {
-            assert.ifError(err);
-            assert.deepEqual(data, []);
-            done();
-        });
+        user.notifications.getNotifications(
+            ['doesnotexistnid1', 'doesnotexistnid2'],
+            uid,
+            (err, data) => {
+                assert.ifError(err);
+                assert.deepEqual(data, []);
+                done();
+            },
+        );
     });
 
     it('should get daily notifications', (done) => {
@@ -405,39 +506,49 @@ describe('Notifications', () => {
 
     it('should send notification to followers of user when he posts', (done) => {
         let followerUid;
-        async.waterfall([
-            function (next) {
-                user.create({ username: 'follower' }, next);
+        async.waterfall(
+            [
+                function (next) {
+                    user.create({ username: 'follower' }, next);
+                },
+                function (_followerUid, next) {
+                    followerUid = _followerUid;
+                    user.follow(followerUid, uid, next);
+                },
+                function (next) {
+                    categories.create(
+                        {
+                            name: 'Test Category',
+                            description:
+                                'Test category created by testing script',
+                        },
+                        next,
+                    );
+                },
+                function (category, next) {
+                    topics.post(
+                        {
+                            uid: uid,
+                            cid: category.cid,
+                            title: 'Test Topic Title',
+                            content: 'The content of test topic',
+                        },
+                        next,
+                    );
+                },
+                function (data, next) {
+                    setTimeout(next, 1100);
+                },
+                function (next) {
+                    user.notifications.getAll(followerUid, '', next);
+                },
+            ],
+            (err, data) => {
+                assert.ifError(err);
+                assert(data);
+                done();
             },
-            function (_followerUid, next) {
-                followerUid = _followerUid;
-                user.follow(followerUid, uid, next);
-            },
-            function (next) {
-                categories.create({
-                    name: 'Test Category',
-                    description: 'Test category created by testing script',
-                }, next);
-            },
-            function (category, next) {
-                topics.post({
-                    uid: uid,
-                    cid: category.cid,
-                    title: 'Test Topic Title',
-                    content: 'The content of test topic',
-                }, next);
-            },
-            function (data, next) {
-                setTimeout(next, 1100);
-            },
-            function (next) {
-                user.notifications.getAll(followerUid, '', next);
-            },
-        ], (err, data) => {
-            assert.ifError(err);
-            assert(data);
-            done();
-        });
+        );
     });
 
     it('should send welcome notification', (done) => {
@@ -459,27 +570,38 @@ describe('Notifications', () => {
     });
 
     it('should prune notifications', (done) => {
-        notifications.create({
-            bodyShort: 'bodyShort',
-            nid: 'tobedeleted',
-            path: '/notification/path',
-        }, (err, notification) => {
-            assert.ifError(err);
-            notifications.prune((err) => {
+        notifications.create(
+            {
+                bodyShort: 'bodyShort',
+                nid: 'tobedeleted',
+                path: '/notification/path',
+            },
+            (err, notification) => {
                 assert.ifError(err);
-                const month = 2592000000;
-                db.sortedSetAdd('notifications', Date.now() - (2 * month), notification.nid, (err) => {
+                notifications.prune((err) => {
                     assert.ifError(err);
-                    notifications.prune((err) => {
-                        assert.ifError(err);
-                        notifications.get(notification.nid, (err, data) => {
+                    const month = 2592000000;
+                    db.sortedSetAdd(
+                        'notifications',
+                        Date.now() - 2 * month,
+                        notification.nid,
+                        (err) => {
                             assert.ifError(err);
-                            assert(!data);
-                            done();
-                        });
-                    });
+                            notifications.prune((err) => {
+                                assert.ifError(err);
+                                notifications.get(
+                                    notification.nid,
+                                    (err, data) => {
+                                        assert.ifError(err);
+                                        assert(!data);
+                                        done();
+                                    },
+                                );
+                            });
+                        },
+                    );
                 });
-            });
-        });
+            },
+        );
     });
 });

@@ -1,4 +1,3 @@
-
 'use strict';
 
 const _ = require('lodash');
@@ -14,7 +13,6 @@ const posts = require('../posts');
 const privileges = require('../privileges');
 const categories = require('../categories');
 const translator = require('../translator');
-
 
 module.exports = function (Topics) {
     Topics.create = async function (data) {
@@ -40,7 +38,10 @@ module.exports = function (Topics) {
             topicData.tags = data.tags.join(',');
         }
 
-        const result = await plugins.hooks.fire('filter:topic.create', { topic: topicData, data: data });
+        const result = await plugins.hooks.fire('filter:topic.create', {
+            topic: topicData,
+            data: data,
+        });
         topicData = result.topic;
         await db.setObject(`topic:${topicData.tid}`, topicData);
 
@@ -56,24 +57,39 @@ module.exports = function (Topics) {
         }
 
         await Promise.all([
-            db.sortedSetsAdd(timestampedSortedSetKeys, timestamp, topicData.tid),
-            db.sortedSetsAdd([
-                'topics:views', 'topics:posts', 'topics:votes',
-                `cid:${topicData.cid}:tids:votes`,
-                `cid:${topicData.cid}:tids:posts`,
-                `cid:${topicData.cid}:tids:views`,
-            ], 0, topicData.tid),
+            db.sortedSetsAdd(
+                timestampedSortedSetKeys,
+                timestamp,
+                topicData.tid,
+            ),
+            db.sortedSetsAdd(
+                [
+                    'topics:views',
+                    'topics:posts',
+                    'topics:votes',
+                    `cid:${topicData.cid}:tids:votes`,
+                    `cid:${topicData.cid}:tids:posts`,
+                    `cid:${topicData.cid}:tids:views`,
+                ],
+                0,
+                topicData.tid,
+            ),
             user.addTopicIdToUser(topicData.uid, topicData.tid, timestamp),
             db.incrObjectField(`category:${topicData.cid}`, 'topic_count'),
             db.incrObjectField('global', 'topicCount'),
             Topics.createTags(data.tags, topicData.tid, timestamp),
-            scheduled ? Promise.resolve() : categories.updateRecentTid(topicData.cid, topicData.tid),
+            scheduled
+                ? Promise.resolve()
+                : categories.updateRecentTid(topicData.cid, topicData.tid),
         ]);
         if (scheduled) {
             await Topics.scheduled.pin(tid, topicData);
         }
 
-        plugins.hooks.fire('action:topic.save', { topic: _.clone(topicData), data: data });
+        plugins.hooks.fire('action:topic.save', {
+            topic: _.clone(topicData),
+            data: data,
+        });
         return topicData.tid;
     };
 
@@ -115,11 +131,19 @@ module.exports = function (Topics) {
          * Certain errors are expected when required data is not given, hence
          * the option for types to be null/invalid in the type assertions.
          */
-        assert(!data.uid || typeof data.uid === 'number' || typeof data.uid === 'string');
+        assert(
+            !data.uid ||
+                typeof data.uid === 'number' ||
+                typeof data.uid === 'string',
+        );
         assert(!data.title || typeof data.title === 'string');
         assert(!data.tags || typeof data.tags === 'object');
         assert(!data.content || typeof data.content === 'string');
-        assert(!data.cid || typeof data.cid === 'number' || typeof data.cid === 'string');
+        assert(
+            !data.cid ||
+                typeof data.cid === 'number' ||
+                typeof data.cid === 'string',
+        );
         assert(!data.fromQueue || typeof data.fromQueue === 'boolean');
         assert(!data.req || !data.req.ip || typeof data.req.ip === 'string');
 
@@ -144,7 +168,6 @@ module.exports = function (Topics) {
             privileges.categories.can('topics:tag', data.cid, uid),
         ]);
 
-
         if (!categoryExists) {
             throw new Error('[[error:no-category]]');
         }
@@ -158,12 +181,16 @@ module.exports = function (Topics) {
             assert(category.hasOwnProperty('name'));
             assert(typeof category.name === 'string');
 
-            const isStudent = (userInfo === 'student');
-            const isAnnouncement = (category.name === 'Announcements');
+            const isStudent = userInfo === 'student';
+            const isAnnouncement = category.name === 'Announcements';
             isStudentAnnouncement = isStudent && isAnnouncement;
         }
 
-        if (!canCreate || isStudentAnnouncement || (!canTag && data.tags.length)) {
+        if (
+            !canCreate ||
+            isStudentAnnouncement ||
+            (!canTag && data.tags.length)
+        ) {
             throw new Error('[[error:no-privileges]]');
         }
 
@@ -204,10 +231,18 @@ module.exports = function (Topics) {
         }
 
         analytics.increment(['topics', `topics:byCid:${topicData.cid}`]);
-        plugins.hooks.fire('action:topic.post', { topic: topicData, post: postData, data: data });
+        plugins.hooks.fire('action:topic.post', {
+            topic: topicData,
+            post: postData,
+            data: data,
+        });
 
         if (parseInt(uid, 10) && !topicData.scheduled) {
-            user.notifications.sendTopicNotificationToFollowers(uid, topicData, postData);
+            user.notifications.sendTopicNotificationToFollowers(
+                uid,
+                topicData,
+                postData,
+            );
         }
 
         assert(!postData.ip || typeof postData.ip === 'string');
@@ -218,7 +253,9 @@ module.exports = function (Topics) {
         assert(typeof topicData.index === 'number');
         assert(typeof topicData.cid === 'number');
         assert(typeof topicData.unreplied === 'boolean');
-        assert(!topicData.mainPost.ip || typeof topicData.mainPost.ip === 'string');
+        assert(
+            !topicData.mainPost.ip || typeof topicData.mainPost.ip === 'string',
+        );
         assert(typeof topicData.mainPost.tid === 'number');
         assert(typeof topicData.mainPost.user === 'object');
         assert(typeof topicData.mainPost.index === 'number');
@@ -296,7 +333,11 @@ module.exports = function (Topics) {
 
             Topics.notifyFollowers(postData, uid, {
                 type: 'new-reply',
-                bodyShort: translator.compile('notifications:user_posted_to', displayname, postData.topic.title),
+                bodyShort: translator.compile(
+                    'notifications:user_posted_to',
+                    displayname,
+                    postData.topic.title,
+                ),
                 nid: `new_post:tid:${postData.topic.tid}:pid:${postData.pid}:uid:${uid}`,
                 mergeId: `notifications:user_posted_to|${postData.topic.tid}`,
             });
@@ -307,7 +348,10 @@ module.exports = function (Topics) {
         }
 
         analytics.increment(['posts', `posts:byCid:${data.cid}`]);
-        plugins.hooks.fire('action:topic.reply', { post: _.clone(postData), data: data });
+        plugins.hooks.fire('action:topic.reply', {
+            post: _.clone(postData),
+            data: data,
+        });
 
         assert.strictEqual(typeof parseInt(postData.tid, 10), 'number');
         assert.strictEqual(typeof postData.topic.title, 'string');
@@ -322,12 +366,18 @@ module.exports = function (Topics) {
         const { uid } = postData;
         await Topics.markAsUnreadForAll(tid);
         await Topics.markAsRead([tid], uid);
-        const [
-            userInfo,
-            topicInfo,
-        ] = await Promise.all([
+        const [userInfo, topicInfo] = await Promise.all([
             posts.getUserInfoForPosts([postData.uid], uid),
-            Topics.getTopicFields(tid, ['tid', 'uid', 'title', 'slug', 'cid', 'postcount', 'mainPid', 'scheduled']),
+            Topics.getTopicFields(tid, [
+                'tid',
+                'uid',
+                'title',
+                'slug',
+                'cid',
+                'postcount',
+                'mainPid',
+                'scheduled',
+            ]),
             Topics.addParentPosts([postData]),
             Topics.syncBacklinks(postData),
             posts.parsePost(postData),
@@ -353,11 +403,23 @@ module.exports = function (Topics) {
     }
 
     Topics.checkTitle = function (title) {
-        check(title, meta.config.minimumTitleLength, meta.config.maximumTitleLength, 'title-too-short', 'title-too-long');
+        check(
+            title,
+            meta.config.minimumTitleLength,
+            meta.config.maximumTitleLength,
+            'title-too-short',
+            'title-too-long',
+        );
     };
 
     Topics.checkContent = function (content) {
-        check(content, meta.config.minimumPostLength, meta.config.maximumPostLength, 'content-too-short', 'content-too-long');
+        check(
+            content,
+            meta.config.minimumPostLength,
+            meta.config.maximumPostLength,
+            'content-too-short',
+            'content-too-long',
+        );
     };
 
     function check(item, min, max, minError, maxError) {
@@ -366,7 +428,11 @@ module.exports = function (Topics) {
             item = utils.stripHTMLTags(item).trim();
         }
 
-        if (item === null || item === undefined || item.length < parseInt(min, 10)) {
+        if (
+            item === null ||
+            item === undefined ||
+            item.length < parseInt(min, 10)
+        ) {
             throw new Error(`[[error:${minError}, ${min}]]`);
         } else if (item.length > parseInt(max, 10)) {
             throw new Error(`[[error:${maxError}, ${max}]]`);
@@ -374,7 +440,11 @@ module.exports = function (Topics) {
     }
 
     async function guestHandleValid(data) {
-        if (meta.config.allowGuestHandles && parseInt(data.uid, 10) === 0 && data.handle) {
+        if (
+            meta.config.allowGuestHandles &&
+            parseInt(data.uid, 10) === 0 &&
+            data.handle
+        ) {
             if (data.handle.length > meta.config.maximumUsernameLength) {
                 throw new Error('[[error:guest-handle-invalid]]');
             }

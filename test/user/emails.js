@@ -90,7 +90,9 @@ describe('email confirmation (library methods)', () => {
 
             assert(isFinite(expiry));
             assert(expiry > 0);
-            assert(expiry <= meta.config.emailConfirmExpiry * 24 * 60 * 60 * 1000);
+            assert(
+                expiry <= meta.config.emailConfirmExpiry * 24 * 60 * 60 * 1000,
+            );
         });
     });
 
@@ -102,15 +104,27 @@ describe('email confirmation (library methods)', () => {
             });
             await user.email.expireValidation(uid);
 
-            assert.strictEqual(await user.email.isValidationPending(uid), false);
-            assert.strictEqual(await user.email.isValidationPending(uid, email), false);
-            assert.strictEqual(await user.email.canSendValidation(uid, email), true);
+            assert.strictEqual(
+                await user.email.isValidationPending(uid),
+                false,
+            );
+            assert.strictEqual(
+                await user.email.isValidationPending(uid, email),
+                false,
+            );
+            assert.strictEqual(
+                await user.email.canSendValidation(uid, email),
+                true,
+            );
         });
     });
 
     describe('canSendValidation', () => {
         it('should return true if no validation is pending', async () => {
-            const ok = await user.email.canSendValidation(uid, 'test@example.com');
+            const ok = await user.email.canSendValidation(
+                uid,
+                'test@example.com',
+            );
 
             assert(ok);
         });
@@ -120,7 +134,10 @@ describe('email confirmation (library methods)', () => {
             await user.email.sendValidationEmail(uid, {
                 email,
             });
-            const ok = await user.email.canSendValidation(uid, 'test@example.com');
+            const ok = await user.email.canSendValidation(
+                uid,
+                'test@example.com',
+            );
 
             assert.strictEqual(ok, false);
         });
@@ -131,7 +148,10 @@ describe('email confirmation (library methods)', () => {
                 email,
             });
             await db.pexpire(`confirm:byUid:${uid}`, 1000);
-            const ok = await user.email.canSendValidation(uid, 'test@example.com');
+            const ok = await user.email.canSendValidation(
+                uid,
+                'test@example.com',
+            );
 
             assert(ok);
         });
@@ -141,15 +161,16 @@ describe('email confirmation (library methods)', () => {
 describe('email confirmation (v3 api)', () => {
     let userObj;
     let jar;
-    const register = data => new Promise((resolve, reject) => {
-        helpers.registerUser(data, (err, jar, response, body) => {
-            if (err) {
-                return reject(err);
-            }
+    const register = (data) =>
+        new Promise((resolve, reject) => {
+            helpers.registerUser(data, (err, jar, response, body) => {
+                if (err) {
+                    return reject(err);
+                }
 
-            resolve({ jar, response, body });
+                resolve({ jar, response, body });
+            });
         });
-    });
     const login = util.promisify(helpers.loginUser);
 
     before(async () => {
@@ -173,34 +194,57 @@ describe('email confirmation (v3 api)', () => {
 
     it('should have a pending validation', async () => {
         const code = await db.get(`confirm:byUid:${userObj.uid}`);
-        assert.strictEqual(await user.email.isValidationPending(userObj.uid, 'test@example.org'), true);
+        assert.strictEqual(
+            await user.email.isValidationPending(
+                userObj.uid,
+                'test@example.org',
+            ),
+            true,
+        );
     });
 
     it('should not list their email', async () => {
-        const { res, body } = await helpers.request('get', `/api/v3/users/${userObj.uid}/emails`, {
-            jar,
-            json: true,
-        });
+        const { res, body } = await helpers.request(
+            'get',
+            `/api/v3/users/${userObj.uid}/emails`,
+            {
+                jar,
+                json: true,
+            },
+        );
 
         assert.strictEqual(res.statusCode, 200);
-        assert.deepStrictEqual(body, JSON.parse('{"status":{"code":"ok","message":"OK"},"response":{"emails":[]}}'));
+        assert.deepStrictEqual(
+            body,
+            JSON.parse(
+                '{"status":{"code":"ok","message":"OK"},"response":{"emails":[]}}',
+            ),
+        );
     });
 
     it('should not allow confirmation if they are not an admin', async () => {
-        const { res } = await helpers.request('post', `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`, {
-            jar,
-            json: true,
-        });
+        const { res } = await helpers.request(
+            'post',
+            `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`,
+            {
+                jar,
+                json: true,
+            },
+        );
 
         assert.strictEqual(res.statusCode, 403);
     });
 
     it('should not confirm an email that is not pending or set', async () => {
         await groups.join('administrators', userObj.uid);
-        const { res, body } = await helpers.request('post', `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('fake@example.org')}/confirm`, {
-            jar,
-            json: true,
-        });
+        const { res, body } = await helpers.request(
+            'post',
+            `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('fake@example.org')}/confirm`,
+            {
+                jar,
+                json: true,
+            },
+        );
 
         assert.strictEqual(res.statusCode, 404);
         await groups.leave('administrators', userObj.uid);
@@ -208,13 +252,20 @@ describe('email confirmation (v3 api)', () => {
 
     it('should confirm their email (using the pending validation)', async () => {
         await groups.join('administrators', userObj.uid);
-        const { res, body } = await helpers.request('post', `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`, {
-            jar,
-            json: true,
-        });
+        const { res, body } = await helpers.request(
+            'post',
+            `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`,
+            {
+                jar,
+                json: true,
+            },
+        );
 
         assert.strictEqual(res.statusCode, 200);
-        assert.deepStrictEqual(body, JSON.parse('{"status":{"code":"ok","message":"OK"},"response":{}}'));
+        assert.deepStrictEqual(
+            body,
+            JSON.parse('{"status":{"code":"ok","message":"OK"},"response":{}}'),
+        );
         await groups.leave('administrators', userObj.uid);
     });
 
@@ -224,13 +275,20 @@ describe('email confirmation (v3 api)', () => {
         ({ jar } = await login('email-test', 'abcdef')); // email removal logs out everybody
         await groups.join('administrators', userObj.uid);
 
-        const { res, body } = await helpers.request('post', `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`, {
-            jar,
-            json: true,
-        });
+        const { res, body } = await helpers.request(
+            'post',
+            `/api/v3/users/${userObj.uid}/emails/${encodeURIComponent('test@example.org')}/confirm`,
+            {
+                jar,
+                json: true,
+            },
+        );
 
         assert.strictEqual(res.statusCode, 200);
-        assert.deepStrictEqual(body, JSON.parse('{"status":{"code":"ok","message":"OK"},"response":{}}'));
+        assert.deepStrictEqual(
+            body,
+            JSON.parse('{"status":{"code":"ok","message":"OK"},"response":{}}'),
+        );
         await groups.leave('administrators', userObj.uid);
     });
 });

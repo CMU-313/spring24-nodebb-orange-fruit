@@ -89,20 +89,30 @@ describe('file', () => {
         });
 
         it('should error if source does not exist', (done) => {
-            file.saveFileToLocal(filename, folder, `${tempPath}000000000`, (err) => {
-                assert(err);
-                assert.strictEqual(err.code, 'ENOENT');
+            file.saveFileToLocal(
+                filename,
+                folder,
+                `${tempPath}000000000`,
+                (err) => {
+                    assert(err);
+                    assert.strictEqual(err.code, 'ENOENT');
 
-                done();
-            });
+                    done();
+                },
+            );
         });
 
         it('should error if folder is relative', (done) => {
-            file.saveFileToLocal(filename, '../../text', `${tempPath}000000000`, (err) => {
-                assert(err);
-                assert.strictEqual(err.message, '[[error:invalid-path]]');
-                done();
-            });
+            file.saveFileToLocal(
+                filename,
+                '../../text',
+                `${tempPath}000000000`,
+                (err) => {
+                    assert(err);
+                    assert.strictEqual(err.message, '[[error:invalid-path]]');
+                    done();
+                },
+            );
         });
     });
 

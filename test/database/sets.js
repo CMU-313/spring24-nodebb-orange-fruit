@@ -1,6 +1,5 @@
 'use strict';
 
-
 const async = require('async');
 const assert = require('assert');
 const db = require('../mocks/databasemock');
@@ -52,7 +51,10 @@ describe('Set methods', () => {
                 assert.equal(err, null);
                 assert.equal(set.length, 5);
                 set.forEach((value) => {
-                    assert.notEqual(['1', '2', '3', '4', '5'].indexOf(value), -1);
+                    assert.notEqual(
+                        ['1', '2', '3', '4', '5'].indexOf(value),
+                        -1,
+                    );
                 });
 
                 done();
@@ -87,7 +89,10 @@ describe('Set methods', () => {
                 assert.equal(err, null);
                 assert.equal(Array.isArray(sets), true);
                 assert.equal(arguments.length, 2);
-                assert.equal(Array.isArray(sets[0]) && Array.isArray(sets[1]), true);
+                assert.equal(
+                    Array.isArray(sets[0]) && Array.isArray(sets[1]),
+                    true,
+                );
                 assert.strictEqual(sets[0][0], 'value');
                 assert.strictEqual(sets[1][0], 'value');
                 done();
@@ -125,13 +130,17 @@ describe('Set methods', () => {
         });
 
         it('should return an array of booleans', (done) => {
-            db.isSetMembers('testSet4', ['1', '2', '10', '3'], function (err, members) {
-                assert.equal(err, null);
-                assert.equal(arguments.length, 2);
-                assert.equal(Array.isArray(members), true);
-                assert.deepEqual(members, [true, true, false, true]);
-                done();
-            });
+            db.isSetMembers(
+                'testSet4',
+                ['1', '2', '10', '3'],
+                function (err, members) {
+                    assert.equal(err, null);
+                    assert.equal(arguments.length, 2);
+                    assert.equal(Array.isArray(members), true);
+                    assert.deepEqual(members, [true, true, false, true]);
+                    done();
+                },
+            );
         });
     });
 
@@ -141,13 +150,17 @@ describe('Set methods', () => {
         });
 
         it('should return an array of booleans', (done) => {
-            db.isMemberOfSets(['set1', 'testSet1', 'set2', 'doesnotexist'], 'value', function (err, members) {
-                assert.equal(err, null);
-                assert.equal(arguments.length, 2);
-                assert.equal(Array.isArray(members), true);
-                assert.deepEqual(members, [true, false, true, false]);
-                done();
-            });
+            db.isMemberOfSets(
+                ['set1', 'testSet1', 'set2', 'doesnotexist'],
+                'value',
+                function (err, members) {
+                    assert.equal(err, null);
+                    assert.equal(arguments.length, 2);
+                    assert.equal(Array.isArray(members), true);
+                    assert.deepEqual(members, [true, false, true, false]);
+                    done();
+                },
+            );
         });
     });
 
@@ -176,21 +189,27 @@ describe('Set methods', () => {
 
     describe('setsCount()', () => {
         before((done) => {
-            async.parallel([
-                async.apply(db.setAdd, 'set5', [1, 2, 3, 4, 5]),
-                async.apply(db.setAdd, 'set6', 1),
-                async.apply(db.setAdd, 'set7', 2),
-            ], done);
+            async.parallel(
+                [
+                    async.apply(db.setAdd, 'set5', [1, 2, 3, 4, 5]),
+                    async.apply(db.setAdd, 'set6', 1),
+                    async.apply(db.setAdd, 'set7', 2),
+                ],
+                done,
+            );
         });
 
         it('should return the element count of sets', (done) => {
-            db.setsCount(['set5', 'set6', 'set7', 'doesnotexist'], function (err, counts) {
-                assert.equal(err, null);
-                assert.equal(arguments.length, 2);
-                assert.equal(Array.isArray(counts), true);
-                assert.deepEqual(counts, [5, 1, 1, 0]);
-                done();
-            });
+            db.setsCount(
+                ['set5', 'set6', 'set7', 'doesnotexist'],
+                function (err, counts) {
+                    assert.equal(err, null);
+                    assert.equal(arguments.length, 2);
+                    assert.equal(Array.isArray(counts), true);
+                    assert.deepEqual(counts, [5, 1, 1, 0]);
+                    done();
+                },
+            );
         });
     });
 
@@ -228,24 +247,39 @@ describe('Set methods', () => {
         });
 
         it('should remove multiple values from multiple keys', (done) => {
-            db.setAdd('multiSetTest1', ['one', 'two', 'three', 'four'], (err) => {
-                assert.ifError(err);
-                db.setAdd('multiSetTest2', ['three', 'four', 'five', 'six'], (err) => {
+            db.setAdd(
+                'multiSetTest1',
+                ['one', 'two', 'three', 'four'],
+                (err) => {
                     assert.ifError(err);
-                    db.setRemove(['multiSetTest1', 'multiSetTest2'], ['three', 'four', 'five', 'doesnt exist'], (err) => {
-                        assert.ifError(err);
-                        db.getSetsMembers(['multiSetTest1', 'multiSetTest2'], (err, members) => {
+                    db.setAdd(
+                        'multiSetTest2',
+                        ['three', 'four', 'five', 'six'],
+                        (err) => {
                             assert.ifError(err);
-                            assert.equal(members[0].length, 2);
-                            assert.equal(members[1].length, 1);
-                            assert(members[0].includes('one'));
-                            assert(members[0].includes('two'));
-                            assert(members[1].includes('six'));
-                            done();
-                        });
-                    });
-                });
-            });
+                            db.setRemove(
+                                ['multiSetTest1', 'multiSetTest2'],
+                                ['three', 'four', 'five', 'doesnt exist'],
+                                (err) => {
+                                    assert.ifError(err);
+                                    db.getSetsMembers(
+                                        ['multiSetTest1', 'multiSetTest2'],
+                                        (err, members) => {
+                                            assert.ifError(err);
+                                            assert.equal(members[0].length, 2);
+                                            assert.equal(members[1].length, 1);
+                                            assert(members[0].includes('one'));
+                                            assert(members[0].includes('two'));
+                                            assert(members[1].includes('six'));
+                                            done();
+                                        },
+                                    );
+                                },
+                            );
+                        },
+                    );
+                },
+            );
         });
     });
 

@@ -1,23 +1,23 @@
 name: Prettier
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
 
 jobs:
-  prettier:
-    runs-on: ubuntu-latest
+    prettier:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: npm install --save-dev eslint-config-prettier
+            - name: Install dependencies
+              run: npm install --save-dev eslint-config-prettier
 
-      - name: Run Prettier
-        run: npx prettier --check .
+            - name: Run Prettier
+              run: npx prettier --check .

@@ -6,12 +6,18 @@ const fs = require('fs');
 const db = require('./mocks/databasemock');
 
 const active = nconf.get('test_plugins') || [];
-const toTest = fs.readdirSync(path.join(__dirname, '../node_modules'))
-    .filter(p => p.startsWith('nodebb-') && active.includes(p));
+const toTest = fs
+    .readdirSync(path.join(__dirname, '../node_modules'))
+    .filter((p) => p.startsWith('nodebb-') && active.includes(p));
 
 describe('Installed Plugins', () => {
     toTest.forEach((plugin) => {
-        const pathToTests = path.join(__dirname, '../node_modules', plugin, 'test');
+        const pathToTests = path.join(
+            __dirname,
+            '../node_modules',
+            plugin,
+            'test',
+        );
         try {
             require(pathToTests);
         } catch (err) {

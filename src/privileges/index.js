@@ -17,30 +17,32 @@ privileges.init = async () => {
     let uids = await db.getSortedSetRangeWithScores('users:joindate', 0, -1);
     assert(typeof uids === 'object');
 
-    uids = uids.map(user => user.value);
+    uids = uids.map((user) => user.value);
     assert(typeof uids === 'object');
 
     const promises = [];
 
     for (const uid of uids) {
-        promises.push((async () => {
-            assert(typeof uid === 'string');
+        promises.push(
+            (async () => {
+                assert(typeof uid === 'string');
 
-            const userInfo = await Users.getUserField(uid, 'accounttype');
-            const isTA = (userInfo === 'TA');
-            const isInstructor = (userInfo === 'instructor');
+                const userInfo = await Users.getUserField(uid, 'accounttype');
+                const isTA = userInfo === 'TA';
+                const isInstructor = userInfo === 'instructor';
 
-            assert(typeof userInfo === 'string');
-            assert(typeof isTA === 'boolean');
-            assert(typeof isInstructor === 'boolean');
+                assert(typeof userInfo === 'string');
+                assert(typeof isTA === 'boolean');
+                assert(typeof isInstructor === 'boolean');
 
-            if (isTA || isInstructor) {
-                privileges.global.give(['mute'], [uid]);
-            }
-            if (isInstructor) {
-                privileges.global.give(['ban'], [uid]);
-            }
-        })());
+                if (isTA || isInstructor) {
+                    privileges.global.give(['mute'], [uid]);
+                }
+                if (isInstructor) {
+                    privileges.global.give(['ban'], [uid]);
+                }
+            })(),
+        );
     }
 
     assert(typeof promises === 'object');

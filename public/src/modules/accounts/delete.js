@@ -1,6 +1,10 @@
 'use strict';
 
-define('accounts/delete', ['api', 'bootbox', 'alerts'], function (api, bootbox, alerts) {
+define('accounts/delete', ['api', 'bootbox', 'alerts'], function (
+    api,
+    bootbox,
+    alerts,
+) {
     const Delete = {};
 
     Delete.account = function (uid, callback) {
@@ -9,7 +13,7 @@ define('accounts/delete', ['api', 'bootbox', 'alerts'], function (api, bootbox, 
             '[[user:delete_this_account_confirm]]',
             '/account',
             '[[user:account-deleted]]',
-            callback
+            callback,
         );
     };
 
@@ -19,7 +23,7 @@ define('accounts/delete', ['api', 'bootbox', 'alerts'], function (api, bootbox, 
             '[[user:delete_account_content_confirm]]',
             '/content',
             '[[user:account-content-deleted]]',
-            callback
+            callback,
         );
     };
 
@@ -29,7 +33,7 @@ define('accounts/delete', ['api', 'bootbox', 'alerts'], function (api, bootbox, 
             '[[user:delete_all_confirm]]',
             '',
             '[[user:account-deleted]]',
-            callback
+            callback,
         );
     };
 
@@ -39,13 +43,15 @@ define('accounts/delete', ['api', 'bootbox', 'alerts'], function (api, bootbox, 
                 return;
             }
 
-            api.del(`/users/${uid}${path}`, {}).then(() => {
-                alerts.success(successText);
+            api.del(`/users/${uid}${path}`, {})
+                .then(() => {
+                    alerts.success(successText);
 
-                if (typeof callback === 'function') {
-                    return callback();
-                }
-            }).catch(alerts.error);
+                    if (typeof callback === 'function') {
+                        return callback();
+                    }
+                })
+                .catch(alerts.error);
         });
     }
 
