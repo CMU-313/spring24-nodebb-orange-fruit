@@ -64,6 +64,10 @@ get:
                     type: boolean
                   downvoted:
                     type: boolean
+                  isEnglish:
+                    type: boolean
+                  translatedContent:
+                    type: string
 put:
   tags:
     - posts
